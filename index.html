@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MatchProp | El Tinder Inmobiliario</title>
     
-    <!-- 1. CARGA DE DISEÑO (PRIORIDAD ALTA) -->
+    <!-- 1. ESTILOS Y DISEÑO -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,7 +24,7 @@
         }
     </script>
 
-    <!-- 2. LÓGICA DE APLICACIÓN (SOLO UNA VEZ AQUÍ) -->
+    <!-- 2. LÓGICA JAVASCRIPT (MOVIDA AQUÍ PARA EVITAR ERRORES DE CARGA) -->
     <script>
         const MOCK_CARDS = [
             { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
@@ -35,27 +35,41 @@
         function demoWidget() {
             return {
                 cards: [],
-                init() { this.resetCards(); },
+                init() { 
+                    this.resetCards(); 
+                },
                 resetCards() {
                     // Usamos Math.random() para asegurar IDs únicos y forzar que se pinten de nuevo
-                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i + Math.random() }));
+                    this.cards = MOCK_CARDS.map((c, i) => ({ 
+                        ...c, 
+                        uid: Date.now() + i + Math.random() 
+                    }));
                 },
                 swipe(action) {
                     if (this.cards.length === 0) return;
+                    
+                    // Marcar estado para activar animación CSS
                     this.cards[0].status = action;
-                    setTimeout(() => { this.cards.shift(); }, 300);
+                    
+                    // Esperar a que termine la animación (300ms) y quitar carta
+                    setTimeout(() => {
+                        this.cards.shift();
+                    }, 300);
                 }
             }
         }
 
         function waitlistForm() {
             return {
-                email: '', signed: false, loading: false,
+                email: '', 
+                signed: false, 
+                loading: false,
                 async submit() {
                     if(!this.email) return;
                     this.loading = true;
 
-                    // --- URL DE TU WEBHOOK DE MAKE ---
+                    // --- CONFIGURACIÓN PARA MAKE (INTEGROMAT) ---
+                    // Pega aquí la URL de tu Webhook si deseas guardar los datos realmente
                     const WEBHOOK_URL = 'https://hook.us1.make.com/7t66d8xv2vx2eu57ooi6k76y56rbp3qa'; 
 
                     try {
@@ -63,14 +77,23 @@
                             await fetch(WEBHOOK_URL, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ email: this.email, date: new Date().toLocaleString() })
+                                body: JSON.stringify({ 
+                                    email: this.email, 
+                                    date: new Date().toLocaleString(),
+                                    source: 'Landing MatchProp'
+                                })
                             });
                         } else {
+                            // Simulación visual si no hay webhook configurado
                             await new Promise(resolve => setTimeout(resolve, 1500));
+                            console.log("Lead simulado (configura WEBHOOK_URL):", this.email);
                         }
+                        
                         this.loading = false;
                         this.signed = true;
                     } catch (e) {
+                        console.error(e);
+                        // En caso de error de red, mostramos éxito visualmente en la demo
                         this.loading = false;
                         this.signed = true;
                     }
@@ -83,10 +106,10 @@
         }
     </script>
 
-    <!-- Alpine.js (Cargado después de definir las funciones) -->
+    <!-- 3. ALPINE JS (AHORA PUEDE CARGAR SEGURO) -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
-    <!-- 3. ESTILOS BASE -->
+    <!-- 4. ESTILOS CSS -->
     <style>
         body {
             margin: 0;
@@ -121,6 +144,8 @@
         }
 
         /* Animaciones */
+        .card-stack { position: relative; width: 100%; height: 100%; }
+
         .tinder-card {
             position: absolute; inset: 0;
             background: white;
@@ -247,7 +272,7 @@
                         </div>
                         <h3 class="font-bold text-slate-800">¡Viste todo!</h3>
                         <p class="text-xs text-slate-400 px-6 mt-1 mb-4">Regístrate para ver casas reales.</p>
-                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg hover:bg-slate-700 transition relative z-50 pointer-events-auto">
+                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg hover:bg-slate-700 transition relative z-50 pointer-events-auto cursor-pointer">
                             Repetir Demo
                         </button>
                     </div>

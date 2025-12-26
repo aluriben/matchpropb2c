@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MatchProp | El Tinder Inmobiliario</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        const MOCK_CARDS = [
+            { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
+            { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
+            { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
+        ];
+
+        function demoWidget() {
+            return {
+                cards: [],
+                init() { this.resetCards(); },
+                resetCards() {
+                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i }));
+                },
+                swipe(action) {
+                    if (this.cards.length === 0) return;
+                    this.cards[0].status = action;
+                    setTimeout(() => { this.cards.shift(); }, 300);
+                }
+            }
+        }
+
+        function waitlistForm() {
+            return {
+                email: '', signed: false, loading: false,
+                async submit() {
+                    if(!this.email) return;
+                    this.loading = true;
+
+                    // --- CONFIGURACIÓN PARA MAKE / GOOGLE SHEETS ---
+                    // 1. Crea un escenario en Make con un "Custom Webhook".
+                    // 2. Copia la URL del webhook.
+                    // 3. Pégala abajo dentro de las comillas vacías.
+                    const WEBHOOK_URL = ''; // Ej: 'https://hook.us1.make.com/tu-id-unico'
+
+                    try {
+                        if (WEBHOOK_URL) {
+                            // Envío de datos al Webhook
+                            await fetch(WEBHOOK_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    email: this.email, 
+                                    date: new Date().toLocaleString(),
+                                    source: 'Landing Page MatchProp'
+                                })
+                            });
+                        } else {
+                            // Simulación si no hay URL configurada (para pruebas)
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                            console.log("Simulando envío (Configura WEBHOOK_URL para guardar real):", this.email);
+                        }
+
+                        this.loading = false;
+                        this.signed = true;
+
+                    } catch (error) {
+                        console.error("Error al enviar:", error);
+                        // En caso de error de red, mostramos éxito al usuario de todas formas en la demo
+                        this.loading = false;
+                        this.signed = true; 
+                    }
+                },
+                resetForm() {
+                    this.email = '';
+                    this.signed = false;
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <!-- Google Fonts & Iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    colors: {
+                        brand: '#58cc02', // Verde vibrante
+                        dark: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos Teléfono */
+        .iphone-mockup {
+            width: 320px;
+            height: 640px;
+            background: #f1f5f9;
+            border-radius: 40px;
+            border: 10px solid #1e293b;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.5);
+            margin: 0 auto;
+            z-index: 10;
+        }
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 24px; background: #1e293b;
+            border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+            z-index: 50;
+        }
+
+        /* Stack de Cartas */
+        .card-stack { position: relative; width: 100%; height: 100%; }
+        
+        .tinder-card {
+            position: absolute; inset: 0;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transform-origin: 50% 100%;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 20; 
+            display: flex; 
+            flex-direction: column;
+        }
+
+        .swipe-left { animation: flyOutLeft 0.5s forwards; }
+        .swipe-right { animation: flyOutRight 0.5s forwards; }
+
+        @keyframes flyOutLeft {
+            to { transform: translate(-150%, 50px) rotate(-20deg); opacity: 0; }
+        }
+        @keyframes flyOutRight {
+            to { transform: translate(150%, 50px) rotate(20deg); opacity: 0; }
+        }
+        
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="font-sans text-slate-800 bg-slate-50">
+
+    <!-- NAV -->
+    <nav class="fixed w-full z-50 bg-white/95 backdrop-blur border-b border-slate-100 top-0">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2 font-black text-xl text-slate-800 cursor-pointer" onclick="window.scrollTo(0,0)">
+                <div class="w-8 h-8 bg-brand text-white rounded-lg flex items-center justify-center">M</div>
+                <span>Match<span class="text-brand">Prop</span></span>
+            </div>
+            <a href="#waitlist" class="bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold hover:scale-105 transition shadow-lg hidden sm:block">
+                Unirme
+            </a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="pt-32 pb-16 px-4 text-center max-w-4xl mx-auto">
+        <div class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 border border-green-200">
+            ✨ PRUEBA EL TINDER INMOBILIARIO
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
+            Encuentra casa <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-emerald-600">haciendo Swipe.</span>
+        </h1>
+        <p class="text-lg text-slate-500 mb-8 max-w-xl mx-auto">
+            El primer marketplace inmobiliario impulsado por IA que aprende de tus gustos. Sin listas aburridas.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-3">
+            <a href="#demo" class="px-8 py-3 bg-brand text-white rounded-xl font-bold shadow-lg shadow-brand/30 hover:-translate-y-1 transition">
+                Probar Demo
+            </a>
+            <a href="#waitlist" class="px-8 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition">
+                Lista de Espera
+            </a>
+        </div>
+    </header>
+
+    <!-- SECCIÓN CÓMO FUNCIONA (3 PASOS) -->
+    <section class="py-20 bg-white border-y border-slate-100">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-brand font-black uppercase tracking-widest text-xs mb-2">Paso a Paso</h2>
+                <h3 class="text-3xl font-black text-slate-900">Tan simple como una cita</h3>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Línea conectora (Desktop) -->
+                <div class="hidden md:block absolute top-10 left-[15%] right-[15%] h-1 bg-slate-100 -z-10"></div>
+
+                <!-- Paso 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
+                    <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-2">1. Define tu Estilo</h4>
+                    <p class="text-sm text-slate-500">Cuéntanos qué buscas: Zona, presupuesto y detalles como "balcón" o "cocina abierta".</p>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
+                    <div class="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-2">2. Desliza y Match</h4>
+                    <p class="text-sm text-slate-500">Nuestra IA filtra lo mejor. Desliza a la derecha si te gusta, izquierda si no.</p>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
+                    <div class="w-20 h-20 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-slate-800 mb-2">3. Visita Directa</h4>
+                    <p class="text-sm text-slate-500">Te conectamos con el dueño o agente para agendar visita sin intermediarios molestos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEMO INTERACTIVA -->
+    <section id="demo" class="py-16 bg-slate-50" x-data="demoWidget()">
+        <div class="text-center mb-10 px-4">
+            <span class="bg-brand text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Simulador en Vivo</span>
+            <h2 class="text-3xl font-black text-slate-900 mt-3">¡Inténtalo tú mismo!</h2>
+            <p class="text-sm text-slate-500 mt-2">Usa los botones o desliza.</p>
+        </div>
+
+        <div class="iphone-mockup">
+            <div class="notch"></div>
+            
+            <div class="w-full h-full pt-10 pb-4 px-4 flex flex-col bg-white">
+                <!-- Header App -->
+                <div class="flex justify-between items-center mb-4 px-1">
+                    <span class="font-black text-slate-700 text-lg">Descubrir</span>
+                    <div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                </div>
+
+                <!-- STACK -->
+                <div class="relative flex-1 w-full card-stack">
+                    
+                    <!-- FONDO (Estado Vacío) -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-0">
+                        <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-3xl mb-3 animate-bounce">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">¡Viste todo!</h3>
+                        <p class="text-xs text-slate-400 px-6 mt-1 mb-4">Regístrate para ver casas reales.</p>
+                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg cursor-pointer hover:bg-slate-700 transition relative z-50">
+                            Repetir Demo
+                        </button>
+                    </div>
+
+                    <!-- CARTAS -->
+                    <template x-for="(card, index) in cards" :key="card.uid">
+                        <div x-show="index === 0"
+                             class="tinder-card z-20"
+                             :class="{'swipe-left': card.status === 'nope', 'swipe-right': card.status === 'like'}">
+                            
+                            <!-- Imagen -->
+                            <div class="h-3/5 relative bg-slate-200">
+                                <img :src="card.img" class="w-full h-full object-cover pointer-events-none select-none">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                <div class="absolute top-3 left-3 bg-slate-900/90 text-white px-2 py-1 rounded text-xs font-bold">
+                                    <span x-text="card.price"></span>
+                                </div>
+                                <div class="absolute top-3 right-3 bg-brand text-white px-2 py-1 rounded text-[10px] font-black shadow-md">
+                                    <span x-text="card.match + '%'"></span> MATCH
+                                </div>
+                                <div class="absolute bottom-3 left-3 text-white">
+                                    <h3 class="font-black text-xl drop-shadow-md leading-tight" x-text="card.title"></h3>
+                                    <p class="text-xs font-bold opacity-90 flex items-center gap-1 mt-1">
+                                        <i class="fa-solid fa-location-dot"></i> <span x-text="card.location"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="flex-1 p-4 flex flex-col justify-between bg-white">
+                                <div>
+                                    <div class="flex gap-2 mb-2">
+                                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase" x-text="card.features"></span>
+                                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase">🌟 Top</span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 leading-snug line-clamp-3">
+                                        Increíble oportunidad con excelente iluminación y acabados modernos.
+                                    </p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mt-2">
+                                    <button @click="swipe('nope')" class="py-2.5 rounded-xl border-2 border-slate-200 text-slate-400 active:bg-slate-50 transition font-black text-xs uppercase flex items-center justify-center gap-1">
+                                        <i class="fa-solid fa-xmark"></i> Pasar
+                                    </button>
+                                    <button @click="swipe('like')" class="py-2.5 rounded-xl bg-brand text-white shadow-lg active:bg-green-600 transition font-black text-xs uppercase flex items-center justify-center gap-1 active:scale-95">
+                                        <i class="fa-solid fa-heart"></i> Me Gusta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN BENEFICIOS -->
+    <section class="py-20 bg-white border-y border-slate-100">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-black text-slate-900">¿Por qué MatchProp?</h3>
+                <p class="text-slate-500 mt-2">Reinventamos la búsqueda inmobiliaria.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-slate-50 p-6 rounded-2xl text-center">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🎯</div>
+                    <h4 class="font-bold text-slate-800 mb-1">Solo lo que buscas</h4>
+                    <p class="text-xs text-slate-500">Filtramos el ruido. Si no cumple tus requisitos, no te lo mostramos.</p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-2xl text-center">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🤖</div>
+                    <h4 class="font-bold text-slate-800 mb-1">IA Personalizada</h4>
+                    <p class="text-xs text-slate-500">Aprendemos de tus likes. "A Juan le gustan los pisos altos y las terrazas".</p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-2xl text-center">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🔒</div>
+                    <h4 class="font-bold text-slate-800 mb-1">Cero Spam</h4>
+                    <p class="text-xs text-slate-500">Tus datos son privados. Solo te contactan si tú das "Me gusta" a una casa.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FORMULARIO LISTA DE ESPERA -->
+    <section id="waitlist" class="py-20 bg-slate-900 text-white relative overflow-hidden" x-data="waitlistForm()">
+        <div class="max-w-md mx-auto px-6 relative z-10 text-center">
+            <h2 class="text-3xl font-black mb-3">Únete al Club MatchProp</h2>
+            <p class="text-slate-400 text-sm mb-8 px-4">
+                Recibe acceso anticipado a las mejores ofertas inmobiliarias.
+            </p>
+
+            <!-- FORMULARIO VISIBLE -->
+            <div x-show="!signed" class="bg-white p-2 rounded-2xl shadow-xl transition-all duration-300">
+                <form @submit.prevent="submit" class="flex flex-col gap-2">
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <input type="email" x-model="email" required placeholder="Escribe tu correo..." 
+                               class="w-full bg-slate-50 text-slate-900 placeholder-slate-400 pl-10 pr-4 py-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand font-bold text-sm border-none appearance-none">
+                    </div>
+                    <button type="submit" class="w-full bg-brand hover:bg-green-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-wide shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2" :disabled="loading">
+                        <span x-show="!loading">QUIERO ENTRAR</span>
+                        <span x-show="loading"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- MENSAJE DE ÉXITO -->
+            <div x-show="signed" x-cloak class="bg-green-500/20 border border-green-500/50 p-8 rounded-2xl backdrop-blur-sm mt-4">
+                <div class="text-4xl mb-3">🎉</div>
+                <h3 class="font-black text-xl text-white mb-1">¡Estás dentro!</h3>
+                <p class="text-green-200 text-xs">Te avisaremos a <span x-text="email" class="font-bold text-white"></span>.</p>
+                <button @click="resetForm()" class="mt-6 text-xs font-bold text-white underline opacity-70 hover:opacity-100">Registrar otro</button>
+            </div>
+
+            <p class="mt-6 text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                <i class="fa-solid fa-lock"></i> Datos Seguros
+            </p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 text-slate-600 py-8 border-t border-slate-900 text-center">
+        <p class="text-xs font-bold">© 2025 MatchProp Technologies.</p>
+    </footer>
+
+</body>
+</html>

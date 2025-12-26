@@ -24,7 +24,69 @@
         }
     </script>
 
-    <!-- 2. ESTILOS BASE (FALLBACK PARA QUE SIEMPRE SE VEA BIEN) -->
+    <!-- 2. LÓGICA DE APLICACIÓN (SOLO UNA VEZ AQUÍ) -->
+    <script>
+        const MOCK_CARDS = [
+            { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
+            { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
+            { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
+        ];
+
+        function demoWidget() {
+            return {
+                cards: [],
+                init() { this.resetCards(); },
+                resetCards() {
+                    // Usamos Math.random() para asegurar IDs únicos y forzar que se pinten de nuevo
+                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i + Math.random() }));
+                },
+                swipe(action) {
+                    if (this.cards.length === 0) return;
+                    this.cards[0].status = action;
+                    setTimeout(() => { this.cards.shift(); }, 300);
+                }
+            }
+        }
+
+        function waitlistForm() {
+            return {
+                email: '', signed: false, loading: false,
+                async submit() {
+                    if(!this.email) return;
+                    this.loading = true;
+
+                    // --- URL DE TU WEBHOOK DE MAKE ---
+                    const WEBHOOK_URL = 'https://hook.us1.make.com/7t66d8xv2vx2eu57ooi6k76y56rbp3qa'; 
+
+                    try {
+                        if (WEBHOOK_URL) {
+                            await fetch(WEBHOOK_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: this.email, date: new Date().toLocaleString() })
+                            });
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                        }
+                        this.loading = false;
+                        this.signed = true;
+                    } catch (e) {
+                        this.loading = false;
+                        this.signed = true;
+                    }
+                },
+                resetForm() {
+                    this.email = '';
+                    this.signed = false;
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js (Cargado después de definir las funciones) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <!-- 3. ESTILOS BASE -->
     <style>
         body {
             margin: 0;
@@ -313,62 +375,5 @@
         <p class="text-xs font-bold">© 2025 MatchProp Technologies.</p>
     </footer>
 
-    <!-- LÓGICA JAVASCRIPT (AL FINAL) -->
-    <script>
-        const MOCK_CARDS = [
-            { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
-            { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
-            { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
-        ];
-
-        function demoWidget() {
-            return {
-                cards: [],
-                init() { this.resetCards(); },
-                resetCards() {
-                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i }));
-                },
-                swipe(action) {
-                    if (this.cards.length === 0) return;
-                    this.cards[0].status = action;
-                    setTimeout(() => { this.cards.shift(); }, 300);
-                }
-            }
-        }
-
-        function waitlistForm() {
-            return {
-                email: '', signed: false, loading: false,
-                async submit() {
-                    if(!this.email) return;
-                    this.loading = true;
-
-                    // --- URL DE TU WEBHOOK DE MAKE ---
-                    const WEBHOOK_URL = 'https://hook.us1.make.com/7t66d8xv2vx2eu57ooi6k76y56rbp3qa'; 
-
-                    try {
-                        if (WEBHOOK_URL) {
-                            await fetch(WEBHOOK_URL, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ email: this.email, date: new Date().toLocaleString() })
-                            });
-                        } else {
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                        }
-                        this.loading = false;
-                        this.signed = true;
-                    } catch (e) {
-                        this.loading = false;
-                        this.signed = true; // Mostramos éxito aunque falle por red en la demo
-                    }
-                },
-                resetForm() {
-                    this.email = '';
-                    this.signed = false;
-                }
-            }
-        }
-    </script>
 </body>
 </html>

@@ -2,88 +2,11 @@
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MatchProp | El Tinder Inmobiliario</title>
     
-    <!-- Tailwind CSS -->
+    <!-- 1. CARGA DE DISEÑO (PRIORIDAD ALTA) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- LÓGICA JAVASCRIPT -->
-    <script>
-        const MOCK_CARDS = [
-            { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
-            { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
-            { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
-        ];
-
-        function demoWidget() {
-            return {
-                cards: [],
-                init() { this.resetCards(); },
-                resetCards() {
-                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i }));
-                },
-                swipe(action) {
-                    if (this.cards.length === 0) return;
-                    this.cards[0].status = action;
-                    setTimeout(() => { this.cards.shift(); }, 300);
-                }
-            }
-        }
-
-        function waitlistForm() {
-            return {
-                email: '', signed: false, loading: false,
-                async submit() {
-                    if(!this.email) return;
-                    this.loading = true;
-
-                    // --- CONFIGURACIÓN PARA MAKE / GOOGLE SHEETS ---
-                    // 1. Crea un escenario en Make con un "Custom Webhook".
-                    // 2. Copia la URL del webhook.
-                    // 3. Pégala abajo dentro de las comillas vacías.
-                    const WEBHOOK_URL = 'https://hook.us1.make.com/7t66d8xv2vx2eu57ooi6k76y56rbp3qa'; // Ej: 'https://hook.us1.make.com/tu-id-unico'
-
-                    try {
-                        if (WEBHOOK_URL) {
-                            // Envío de datos al Webhook
-                            await fetch(WEBHOOK_URL, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ 
-                                    email: this.email, 
-                                    date: new Date().toLocaleString(),
-                                    source: 'Landing Page MatchProp'
-                                })
-                            });
-                        } else {
-                            // Simulación si no hay URL configurada (para pruebas)
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                            console.log("Simulando envío (Configura WEBHOOK_URL para guardar real):", this.email);
-                        }
-
-                        this.loading = false;
-                        this.signed = true;
-
-                    } catch (error) {
-                        console.error("Error al enviar:", error);
-                        // En caso de error de red, mostramos éxito al usuario de todas formas en la demo
-                        this.loading = false;
-                        this.signed = true; 
-                    }
-                },
-                resetForm() {
-                    this.email = '';
-                    this.signed = false;
-                }
-            }
-        }
-    </script>
-
-    <!-- Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-
-    <!-- Google Fonts & Iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -93,7 +16,7 @@
                 extend: {
                     fontFamily: { sans: ['Nunito', 'sans-serif'] },
                     colors: {
-                        brand: '#58cc02', // Verde vibrante
+                        brand: '#58cc02', // Verde
                         dark: '#0f172a',
                     }
                 }
@@ -101,57 +24,63 @@
         }
     </script>
 
+    <!-- 2. ESTILOS BASE (FALLBACK PARA QUE SIEMPRE SE VEA BIEN) -->
     <style>
-        /* Estilos Teléfono */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Estilos del Teléfono */
         .iphone-mockup {
-            width: 320px;
-            height: 640px;
-            background: #f1f5f9;
+            width: 100%;
+            max-width: 320px;
+            aspect-ratio: 9/19;
+            background: #ffffff;
             border-radius: 40px;
-            border: 10px solid #1e293b;
+            border: 8px solid #1e293b;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.3);
             margin: 0 auto;
             z-index: 10;
         }
+        
         .notch {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 120px; height: 24px; background: #1e293b;
+            width: 40%; height: 24px; background: #1e293b;
             border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
             z-index: 50;
         }
 
-        /* Stack de Cartas */
-        .card-stack { position: relative; width: 100%; height: 100%; }
-        
+        /* Animaciones */
         .tinder-card {
             position: absolute; inset: 0;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             overflow: hidden;
             transform-origin: 50% 100%;
             transition: transform 0.3s ease, opacity 0.3s ease;
             z-index: 20; 
-            display: flex; 
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         .swipe-left { animation: flyOutLeft 0.5s forwards; }
         .swipe-right { animation: flyOutRight 0.5s forwards; }
 
-        @keyframes flyOutLeft {
-            to { transform: translate(-150%, 50px) rotate(-20deg); opacity: 0; }
-        }
-        @keyframes flyOutRight {
-            to { transform: translate(150%, 50px) rotate(20deg); opacity: 0; }
-        }
+        @keyframes flyOutLeft { to { transform: translate(-150%, 50px) rotate(-20deg); opacity: 0; } }
+        @keyframes flyOutRight { to { transform: translate(150%, 50px) rotate(20deg); opacity: 0; } }
         
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="font-sans text-slate-800 bg-slate-50">
+<body class="antialiased">
 
     <!-- NAV -->
     <nav class="fixed w-full z-50 bg-white/95 backdrop-blur border-b border-slate-100 top-0">
@@ -160,7 +89,7 @@
                 <div class="w-8 h-8 bg-brand text-white rounded-lg flex items-center justify-center">M</div>
                 <span>Match<span class="text-brand">Prop</span></span>
             </div>
-            <a href="#waitlist" class="bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold hover:scale-105 transition shadow-lg hidden sm:block">
+            <a href="#waitlist" class="bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold hover:scale-105 transition shadow-lg block">
                 Unirme
             </a>
         </div>
@@ -174,7 +103,7 @@
         <h1 class="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
             Encuentra casa <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-emerald-600">haciendo Swipe.</span>
         </h1>
-        <p class="text-lg text-slate-500 mb-8 max-w-xl mx-auto">
+        <p class="text-lg text-slate-500 mb-8 max-w-xl mx-auto leading-relaxed">
             El primer marketplace inmobiliario impulsado por IA que aprende de tus gustos. Sin listas aburridas.
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-3">
@@ -188,20 +117,17 @@
     </header>
 
     <!-- SECCIÓN CÓMO FUNCIONA (3 PASOS) -->
-    <section class="py-20 bg-white border-y border-slate-100">
+    <section class="py-16 bg-white border-y border-slate-100">
         <div class="max-w-6xl mx-auto px-4">
-            <div class="text-center mb-16">
+            <div class="text-center mb-12">
                 <h2 class="text-brand font-black uppercase tracking-widest text-xs mb-2">Paso a Paso</h2>
                 <h3 class="text-3xl font-black text-slate-900">Tan simple como una cita</h3>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 relative">
-                <!-- Línea conectora (Desktop) -->
-                <div class="hidden md:block absolute top-10 left-[15%] right-[15%] h-1 bg-slate-100 -z-10"></div>
-
+            <div class="grid md:grid-cols-3 gap-8">
                 <!-- Paso 1 -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
-                    <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-sliders"></i>
                     </div>
                     <h4 class="text-xl font-bold text-slate-800 mb-2">1. Define tu Estilo</h4>
@@ -209,8 +135,8 @@
                 </div>
 
                 <!-- Paso 2 -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
-                    <div class="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-16 h-16 bg-green-100 text-brand rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-heart"></i>
                     </div>
                     <h4 class="text-xl font-bold text-slate-800 mb-2">2. Desliza y Match</h4>
@@ -218,8 +144,8 @@
                 </div>
 
                 <!-- Paso 3 -->
-                <div class="bg-white p-6 rounded-2xl border border-slate-50 shadow-sm relative text-center">
-                    <div class="w-20 h-20 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-4 border-white shadow-sm">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                    <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-key"></i>
                     </div>
                     <h4 class="text-xl font-bold text-slate-800 mb-2">3. Visita Directa</h4>
@@ -259,7 +185,7 @@
                         </div>
                         <h3 class="font-bold text-slate-800">¡Viste todo!</h3>
                         <p class="text-xs text-slate-400 px-6 mt-1 mb-4">Regístrate para ver casas reales.</p>
-                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg cursor-pointer hover:bg-slate-700 transition relative z-50">
+                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg hover:bg-slate-700 transition relative z-50 pointer-events-auto">
                             Repetir Demo
                         </button>
                     </div>
@@ -300,10 +226,10 @@
                                     </p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3 mt-2">
-                                    <button @click="swipe('nope')" class="py-2.5 rounded-xl border-2 border-slate-200 text-slate-400 active:bg-slate-50 transition font-black text-xs uppercase flex items-center justify-center gap-1">
+                                    <button @click="swipe('nope')" class="py-2.5 rounded-xl border-2 border-slate-200 text-slate-400 font-black text-xs uppercase flex items-center justify-center gap-1 active:bg-slate-50">
                                         <i class="fa-solid fa-xmark"></i> Pasar
                                     </button>
-                                    <button @click="swipe('like')" class="py-2.5 rounded-xl bg-brand text-white shadow-lg active:bg-green-600 transition font-black text-xs uppercase flex items-center justify-center gap-1 active:scale-95">
+                                    <button @click="swipe('like')" class="py-2.5 rounded-xl bg-brand text-white shadow-lg font-black text-xs uppercase flex items-center justify-center gap-1 active:scale-95">
                                         <i class="fa-solid fa-heart"></i> Me Gusta
                                     </button>
                                 </div>
@@ -316,7 +242,7 @@
     </section>
 
     <!-- SECCIÓN BENEFICIOS -->
-    <section class="py-20 bg-white border-y border-slate-100">
+    <section class="py-16 bg-white border-y border-slate-100">
         <div class="max-w-6xl mx-auto px-4">
             <div class="text-center mb-12">
                 <h3 class="text-3xl font-black text-slate-900">¿Por qué MatchProp?</h3>
@@ -325,17 +251,17 @@
             
             <div class="grid md:grid-cols-3 gap-6">
                 <div class="bg-slate-50 p-6 rounded-2xl text-center">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🎯</div>
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3 text-brand">🎯</div>
                     <h4 class="font-bold text-slate-800 mb-1">Solo lo que buscas</h4>
                     <p class="text-xs text-slate-500">Filtramos el ruido. Si no cumple tus requisitos, no te lo mostramos.</p>
                 </div>
                 <div class="bg-slate-50 p-6 rounded-2xl text-center">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🤖</div>
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3 text-blue-500">🤖</div>
                     <h4 class="font-bold text-slate-800 mb-1">IA Personalizada</h4>
                     <p class="text-xs text-slate-500">Aprendemos de tus likes. "A Juan le gustan los pisos altos y las terrazas".</p>
                 </div>
                 <div class="bg-slate-50 p-6 rounded-2xl text-center">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3">🔒</div>
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-xl shadow-sm mx-auto mb-3 text-orange-500">🔒</div>
                     <h4 class="font-bold text-slate-800 mb-1">Cero Spam</h4>
                     <p class="text-xs text-slate-500">Tus datos son privados. Solo te contactan si tú das "Me gusta" a una casa.</p>
                 </div>
@@ -387,5 +313,62 @@
         <p class="text-xs font-bold">© 2025 MatchProp Technologies.</p>
     </footer>
 
+    <!-- LÓGICA JAVASCRIPT (AL FINAL) -->
+    <script>
+        const MOCK_CARDS = [
+            { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
+            { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
+            { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
+        ];
+
+        function demoWidget() {
+            return {
+                cards: [],
+                init() { this.resetCards(); },
+                resetCards() {
+                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i }));
+                },
+                swipe(action) {
+                    if (this.cards.length === 0) return;
+                    this.cards[0].status = action;
+                    setTimeout(() => { this.cards.shift(); }, 300);
+                }
+            }
+        }
+
+        function waitlistForm() {
+            return {
+                email: '', signed: false, loading: false,
+                async submit() {
+                    if(!this.email) return;
+                    this.loading = true;
+
+                    // --- URL DE TU WEBHOOK DE MAKE ---
+                    const WEBHOOK_URL = ''; 
+
+                    try {
+                        if (WEBHOOK_URL) {
+                            await fetch(WEBHOOK_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: this.email, date: new Date().toLocaleString() })
+                            });
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                        }
+                        this.loading = false;
+                        this.signed = true;
+                    } catch (e) {
+                        this.loading = false;
+                        this.signed = true; // Mostramos éxito aunque falle por red en la demo
+                    }
+                },
+                resetForm() {
+                    this.email = '';
+                    this.signed = false;
+                }
+            }
+        }
+    </script>
 </body>
 </html>

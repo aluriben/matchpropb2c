@@ -5,71 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MatchProp | El Tinder Inmobiliario</title>
     
-    <!-- 1. ESTILOS Y DISEÑO -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 1. TAILWIND ESTÁTICO (Funciona sin JS - Soluciona el error de "Sin Diseño") -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    
+    <!-- 2. ICONOS Y FUENTES -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- 3. LÓGICA DE APLICACIÓN (SEGURA) -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
-                    colors: {
-                        brand: '#58cc02', // Verde
-                        dark: '#0f172a',
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- 2. LÓGICA JAVASCRIPT (MOVIDA AQUÍ PARA EVITAR ERRORES DE CARGA) -->
-    <script>
+        // Datos Mock
         const MOCK_CARDS = [
             { id: 1, title: 'Loft Industrial', location: 'Chapinero Alto', price: '$450M', features: '1 Hab • 65m²', match: 98, status: null, img: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80' },
             { id: 2, title: 'Casa Campestre', location: 'La Calera', price: '$850M', features: '3 Hab • Jardín', match: 92, status: null, img: 'https://images.unsplash.com/photo-1600596542815-27b88e35eab3?auto=format&fit=crop&w=600&q=80' },
             { id: 3, title: 'Apto Vista', location: 'Chicó Norte', price: '$620M', features: '2 Hab • Balcón', match: 88, status: null, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80' }
         ];
 
-        function demoWidget() {
-            return {
+        // Inicializador seguro para Alpine
+        document.addEventListener('alpine:init', () => {
+            
+            Alpine.data('demoWidget', () => ({
                 cards: [],
-                init() { 
-                    this.resetCards(); 
-                },
+                init() { this.resetCards(); },
                 resetCards() {
-                    // Usamos Math.random() para asegurar IDs únicos y forzar que se pinten de nuevo
-                    this.cards = MOCK_CARDS.map((c, i) => ({ 
-                        ...c, 
-                        uid: Date.now() + i + Math.random() 
-                    }));
+                    // IDs únicos para forzar re-render
+                    this.cards = MOCK_CARDS.map((c, i) => ({ ...c, uid: Date.now() + i + Math.random() }));
                 },
                 swipe(action) {
                     if (this.cards.length === 0) return;
-                    
-                    // Marcar estado para activar animación CSS
                     this.cards[0].status = action;
-                    
-                    // Esperar a que termine la animación (300ms) y quitar carta
-                    setTimeout(() => {
-                        this.cards.shift();
-                    }, 300);
+                    setTimeout(() => { this.cards.shift(); }, 300);
                 }
-            }
-        }
+            }));
 
-        function waitlistForm() {
-            return {
-                email: '', 
-                signed: false, 
-                loading: false,
+            Alpine.data('waitlistForm', () => ({
+                email: '', signed: false, loading: false,
                 async submit() {
                     if(!this.email) return;
                     this.loading = true;
 
-                    // --- CONFIGURACIÓN PARA MAKE (INTEGROMAT) ---
-                    // Pega aquí la URL de tu Webhook si deseas guardar los datos realmente
+                    // --- TU WEBHOOK DE MAKE/INTEGROMAT ---
                     const WEBHOOK_URL = 'https://hook.us1.make.com/7t66d8xv2vx2eu57ooi6k76y56rbp3qa'; 
 
                     try {
@@ -77,134 +52,114 @@
                             await fetch(WEBHOOK_URL, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ 
-                                    email: this.email, 
-                                    date: new Date().toLocaleString(),
-                                    source: 'Landing MatchProp'
-                                })
+                                body: JSON.stringify({ email: this.email, date: new Date().toLocaleString() })
                             });
                         } else {
-                            // Simulación visual si no hay webhook configurado
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                            console.log("Lead simulado (configura WEBHOOK_URL):", this.email);
+                            await new Promise(r => setTimeout(r, 1500)); // Simulación
                         }
-                        
                         this.loading = false;
                         this.signed = true;
                     } catch (e) {
-                        console.error(e);
-                        // En caso de error de red, mostramos éxito visualmente en la demo
                         this.loading = false;
-                        this.signed = true;
+                        this.signed = true; // Fallback visual
                     }
                 },
                 resetForm() {
                     this.email = '';
                     this.signed = false;
                 }
-            }
-        }
+            }));
+        });
     </script>
 
-    <!-- 3. ALPINE JS (AHORA PUEDE CARGAR SEGURO) -->
+    <!-- 4. ALPINE JS -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
-    <!-- 4. ESTILOS CSS -->
+    <!-- 5. ESTILOS PERSONALIZADOS (FALLBACK DE COLORES) -->
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Nunito', sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Estilos del Teléfono */
-        .iphone-mockup {
-            width: 100%;
-            max-width: 320px;
-            aspect-ratio: 9/19;
-            background: #ffffff;
-            border-radius: 40px;
-            border: 8px solid #1e293b;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.3);
-            margin: 0 auto;
-            z-index: 10;
-        }
+        /* Base */
+        body { font-family: 'Nunito', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         
+        /* Colores Custom (Reemplazan a config de Tailwind si falla el script JS) */
+        .text-brand { color: #58cc02; }
+        .bg-brand { background-color: #58cc02; }
+        .border-brand { border-color: #58cc02; }
+        .hover\:bg-brand-dark:hover { background-color: #46a302; }
+        
+        .bg-dark { background-color: #0f172a; }
+        .text-slate-900 { color: #0f172a; }
+        .text-slate-500 { color: #64748b; }
+        .bg-slate-50 { background-color: #f8fafc; }
+        .bg-white { background-color: #ffffff; }
+
+        /* Componentes */
+        .iphone-mockup {
+            width: 100%; max-width: 320px; aspect-ratio: 9/19;
+            background: #ffffff; border-radius: 40px; border: 8px solid #1e293b;
+            position: relative; overflow: hidden; margin: 0 auto;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.3); z-index: 10;
+        }
         .notch {
             position: absolute; top: 0; left: 50%; transform: translateX(-50%);
             width: 40%; height: 24px; background: #1e293b;
-            border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
-            z-index: 50;
+            border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 50;
         }
-
-        /* Animaciones */
-        .card-stack { position: relative; width: 100%; height: 100%; }
-
         .tinder-card {
-            position: absolute; inset: 0;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transform-origin: 50% 100%;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            z-index: 20; 
-            display: flex; flex-direction: column;
+            position: absolute; inset: 0; background: white; border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); overflow: hidden;
+            transform-origin: 50% 100%; transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 20; display: flex; flex-direction: column;
         }
-
+        
+        /* Animaciones */
         .swipe-left { animation: flyOutLeft 0.5s forwards; }
         .swipe-right { animation: flyOutRight 0.5s forwards; }
-
         @keyframes flyOutLeft { to { transform: translate(-150%, 50px) rotate(-20deg); opacity: 0; } }
         @keyframes flyOutRight { to { transform: translate(150%, 50px) rotate(20deg); opacity: 0; } }
         
+        /* Utilidades */
         [x-cloak] { display: none !important; }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
     </style>
 </head>
 <body class="antialiased">
 
     <!-- NAV -->
-    <nav class="fixed w-full z-50 bg-white/95 backdrop-blur border-b border-slate-100 top-0">
+    <nav class="fixed w-full z-50 bg-white shadow-sm border-b border-gray-100 top-0 pt-safe">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-2 font-black text-xl text-slate-800 cursor-pointer" onclick="window.scrollTo(0,0)">
+            <div class="flex items-center gap-2 font-black text-xl text-slate-900 cursor-pointer" onclick="window.scrollTo(0,0)">
                 <div class="w-8 h-8 bg-brand text-white rounded-lg flex items-center justify-center">M</div>
                 <span>Match<span class="text-brand">Prop</span></span>
             </div>
-            <a href="#waitlist" class="bg-slate-900 text-white px-5 py-2 rounded-full text-xs font-bold hover:scale-105 transition shadow-lg block">
+            <a href="#waitlist" class="bg-dark text-white px-5 py-2 rounded-full text-xs font-bold hover:opacity-90 transition shadow-lg block">
                 Unirme
             </a>
         </div>
     </nav>
 
     <!-- HERO -->
-    <header class="pt-32 pb-16 px-4 text-center max-w-4xl mx-auto">
-        <div class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-4 border border-green-200">
+    <header class="pt-32 pb-16 px-4 text-center max-w-4xl mx-auto bg-slate-50">
+        <div class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-4 border border-green-200">
             ✨ PRUEBA EL TINDER INMOBILIARIO
         </div>
         <h1 class="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
-            Encuentra casa <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-emerald-600">haciendo Swipe.</span>
+            Encuentra casa <br> <span class="text-brand">haciendo Swipe.</span>
         </h1>
         <p class="text-lg text-slate-500 mb-8 max-w-xl mx-auto leading-relaxed">
             El primer marketplace inmobiliario impulsado por IA que aprende de tus gustos. Sin listas aburridas.
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-3">
-            <a href="#demo" class="px-8 py-3 bg-brand text-white rounded-xl font-bold shadow-lg shadow-brand/30 hover:-translate-y-1 transition">
+            <a href="#demo" class="px-8 py-3 bg-brand text-white rounded-xl font-bold shadow-lg transition transform hover:-translate-y-1">
                 Probar Demo
             </a>
-            <a href="#waitlist" class="px-8 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition">
+            <a href="#waitlist" class="px-8 py-3 bg-white border-2 border-gray-200 text-slate-600 rounded-xl font-bold hover:bg-gray-50 transition">
                 Lista de Espera
             </a>
         </div>
     </header>
 
-    <!-- SECCIÓN CÓMO FUNCIONA (3 PASOS) -->
-    <section class="py-16 bg-white border-y border-slate-100">
+    <!-- CÓMO FUNCIONA (3 PASOS) -->
+    <section class="py-16 bg-white border-y border-gray-100">
         <div class="max-w-6xl mx-auto px-4">
             <div class="text-center mb-12">
                 <h2 class="text-brand font-black uppercase tracking-widest text-xs mb-2">Paso a Paso</h2>
@@ -213,7 +168,7 @@
 
             <div class="grid md:grid-cols-3 gap-8">
                 <!-- Paso 1 -->
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
                     <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-sliders"></i>
                     </div>
@@ -222,7 +177,7 @@
                 </div>
 
                 <!-- Paso 2 -->
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
                     <div class="w-16 h-16 bg-green-100 text-brand rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-heart"></i>
                     </div>
@@ -231,7 +186,7 @@
                 </div>
 
                 <!-- Paso 3 -->
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm text-center">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
                     <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                         <i class="fa-solid fa-key"></i>
                     </div>
@@ -243,7 +198,7 @@
     </section>
 
     <!-- DEMO INTERACTIVA -->
-    <section id="demo" class="py-16 bg-slate-50" x-data="demoWidget()">
+    <section id="demo" class="py-16 bg-slate-50" x-data="demoWidget">
         <div class="text-center mb-10 px-4">
             <span class="bg-brand text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Simulador en Vivo</span>
             <h2 class="text-3xl font-black text-slate-900 mt-3">¡Inténtalo tú mismo!</h2>
@@ -267,12 +222,12 @@
                     
                     <!-- FONDO (Estado Vacío) -->
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-0">
-                        <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-3xl mb-3 animate-bounce">
+                        <div class="w-16 h-16 bg-green-50 text-brand rounded-full flex items-center justify-center text-3xl mb-3 animate-bounce">
                             <i class="fa-solid fa-check"></i>
                         </div>
                         <h3 class="font-bold text-slate-800">¡Viste todo!</h3>
                         <p class="text-xs text-slate-400 px-6 mt-1 mb-4">Regístrate para ver casas reales.</p>
-                        <button @click="resetCards()" class="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg hover:bg-slate-700 transition relative z-50 pointer-events-auto cursor-pointer">
+                        <button @click="resetCards()" class="px-5 py-2 bg-dark text-white rounded-lg text-xs font-bold shadow-lg hover:opacity-90 transition relative z-50 pointer-events-auto cursor-pointer">
                             Repetir Demo
                         </button>
                     </div>
@@ -284,10 +239,11 @@
                              :class="{'swipe-left': card.status === 'nope', 'swipe-right': card.status === 'like'}">
                             
                             <!-- Imagen -->
-                            <div class="h-3/5 relative bg-slate-200">
+                            <div class="h-3/5 relative bg-gray-200">
                                 <img :src="card.img" class="w-full h-full object-cover pointer-events-none select-none">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                                <div class="absolute top-3 left-3 bg-slate-900/90 text-white px-2 py-1 rounded text-xs font-bold">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                                
+                                <div class="absolute top-3 left-3 bg-dark text-white px-2 py-1 rounded text-xs font-bold">
                                     <span x-text="card.price"></span>
                                 </div>
                                 <div class="absolute top-3 right-3 bg-brand text-white px-2 py-1 rounded text-[10px] font-black shadow-md">
@@ -305,15 +261,15 @@
                             <div class="flex-1 p-4 flex flex-col justify-between bg-white">
                                 <div>
                                     <div class="flex gap-2 mb-2">
-                                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase" x-text="card.features"></span>
-                                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase">🌟 Top</span>
+                                        <span class="bg-gray-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase" x-text="card.features"></span>
+                                        <span class="bg-gray-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase">🌟 Top</span>
                                     </div>
                                     <p class="text-[11px] text-slate-400 leading-snug line-clamp-3">
                                         Increíble oportunidad con excelente iluminación y acabados modernos.
                                     </p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3 mt-2">
-                                    <button @click="swipe('nope')" class="py-2.5 rounded-xl border-2 border-slate-200 text-slate-400 font-black text-xs uppercase flex items-center justify-center gap-1 active:bg-slate-50">
+                                    <button @click="swipe('nope')" class="py-2.5 rounded-xl border-2 border-gray-200 text-slate-400 font-black text-xs uppercase flex items-center justify-center gap-1 active:bg-gray-50">
                                         <i class="fa-solid fa-xmark"></i> Pasar
                                     </button>
                                     <button @click="swipe('like')" class="py-2.5 rounded-xl bg-brand text-white shadow-lg font-black text-xs uppercase flex items-center justify-center gap-1 active:scale-95">
@@ -328,8 +284,8 @@
         </div>
     </section>
 
-    <!-- SECCIÓN BENEFICIOS -->
-    <section class="py-16 bg-white border-y border-slate-100">
+    <!-- BENEFICIOS -->
+    <section class="py-16 bg-white border-y border-gray-100">
         <div class="max-w-6xl mx-auto px-4">
             <div class="text-center mb-12">
                 <h3 class="text-3xl font-black text-slate-900">¿Por qué MatchProp?</h3>
@@ -357,10 +313,10 @@
     </section>
 
     <!-- FORMULARIO LISTA DE ESPERA -->
-    <section id="waitlist" class="py-20 bg-slate-900 text-white relative overflow-hidden" x-data="waitlistForm()">
+    <section id="waitlist" class="py-20 bg-dark text-white relative overflow-hidden" x-data="waitlistForm">
         <div class="max-w-md mx-auto px-6 relative z-10 text-center">
             <h2 class="text-3xl font-black mb-3">Únete al Club MatchProp</h2>
-            <p class="text-slate-400 text-sm mb-8 px-4">
+            <p class="text-gray-400 text-sm mb-8 px-4">
                 Recibe acceso anticipado a las mejores ofertas inmobiliarias.
             </p>
 
@@ -382,21 +338,21 @@
             </div>
 
             <!-- MENSAJE DE ÉXITO -->
-            <div x-show="signed" x-cloak class="bg-green-500/20 border border-green-500/50 p-8 rounded-2xl backdrop-blur-sm mt-4">
+            <div x-show="signed" x-cloak class="bg-green-900/50 border border-green-500 p-8 rounded-2xl backdrop-blur-sm mt-4">
                 <div class="text-4xl mb-3">🎉</div>
                 <h3 class="font-black text-xl text-white mb-1">¡Estás dentro!</h3>
                 <p class="text-green-200 text-xs">Te avisaremos a <span x-text="email" class="font-bold text-white"></span>.</p>
                 <button @click="resetForm()" class="mt-6 text-xs font-bold text-white underline opacity-70 hover:opacity-100">Registrar otro</button>
             </div>
 
-            <p class="mt-6 text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+            <p class="mt-6 text-[10px] text-gray-500 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
                 <i class="fa-solid fa-lock"></i> Datos Seguros
             </p>
         </div>
     </section>
 
     <!-- FOOTER -->
-    <footer class="bg-slate-950 text-slate-600 py-8 border-t border-slate-900 text-center">
+    <footer class="bg-dark text-gray-500 py-8 border-t border-gray-800 text-center">
         <p class="text-xs font-bold">© 2025 MatchProp Technologies.</p>
     </footer>
 
